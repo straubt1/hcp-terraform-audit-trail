@@ -35,3 +35,9 @@ override.tf.json
 # Ignore CLI configuration files
 .terraformrc
 terraform.rc
+terraform.tfvars
+secrets/
+ai/
+fluent-bit/hcp_terraform.audit
+fluent-bit/exec.0
+*.terraform.lock.hcl

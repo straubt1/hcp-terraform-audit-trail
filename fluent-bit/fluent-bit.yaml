@@ -1,0 +1,45 @@
+service:
+  flush: 5
+  daemon: Off
+  log_level: info
+  parsers_file: parsers.yaml
+
+pipeline:
+  inputs:
+  # Call script to query HCP Terraform Audit Trails API 
+    - name: exec
+      tag: hcp_terraform.audit
+      command: ./hcp_audit_pull.sh
+      interval_sec: 5 # 3600 - 1 hour
+
+  filters:
+  #  Parse JSON result to create fields for each property
+    - name: parser
+      match: hcp_terraform.audit
+      key_name: exec
+      parser: json
+      reserve_data: On
+      preserve_key: Off
+
+  # Add a few HCP Terraform Specific values
+    - name: modify
+      match: hcp_terraform.audit
+      Add:
+        - org_name ${HCPT_ORGANIZATION}
+        - org_id ${HCPT_ORGANIZATION_ID}
+
+  outputs:
+  # Output to a local file, for debugging
+    - name: file
+      match: hcp_terraform.audit
+      path: ./
+  # Push logs into GCP Logging
+    - name: stackdriver
+      match: hcp_terraform.audit
+      resource: generic_task
+      # Generic Tasks (vs. global) require additional fields, may be unneeded
+      # https://cloud.google.com/monitoring/api/resources#tag_generic_task
+      location: app.terraform.io # The GCP or AWS region in which data about the resource is stored.
+      namespace: hcp_terraform.  # A namespace identifier, such as a cluster name.
+      job: hcp_terraform         # An identifier for a grouping of related tasks, such as the name of a microservice or distributed batch job.
+      task_id: hcp_terraform.    # A unique identifier for the task within the namespace and job, such as a replica index identifying the task within the job.

@@ -1,0 +1,35 @@
+version: '3'
+
+dotenv: ['.env', 'secrets/.env']
+
+tasks:
+  fluent:
+    dir: fluent-bit/
+    cmds:
+      - |
+        fluent-bit -c fluent-bit.yaml
+  fluent-bash:
+    dir: fluent-bit/
+    cmds:
+      - |
+        ./hcp_audit_pull.sh
+
+  vector:
+    cmds: 
+      - |
+          vector --config vector.toml 
+  tfc-audit-go:
+    cmds:
+      - |
+        ./terraform-audit-poller
+  tfc-audit-api:
+    desc: Call the API directly
+    cmds:
+      - |
+          curl --header "Authorization: Bearer ${HCPT_API_TOKEN}" \
+            --request GET "https://app.terraform.io/api/v2/organization/audit-trail?since=$(date -u -v-6H '+%Y-%m-%dT%H:%M:%S.000Z')"
+  gcp-auth:
+    desc: Logins to prep for Terraform runs and kubernetes retrieval, a few ways to do this but this offers the easiest path without having to mess with Environment Variables.
+    cmds:
+      - gcloud auth login
+      - gcloud auth application-default login

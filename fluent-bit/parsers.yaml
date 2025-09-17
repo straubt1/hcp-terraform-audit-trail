@@ -1,0 +1,3 @@
+parsers:
+  - name: json
+    format: json
