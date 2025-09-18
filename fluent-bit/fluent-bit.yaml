@@ -1,7 +1,7 @@
 service:
   flush: 5
   daemon: Off
-  log_level: info
+  log_level: debug
   parsers_file: parsers.yaml
 
 pipeline:
@@ -20,6 +20,12 @@ pipeline:
       parser: json
       reserve_data: On
       preserve_key: Off
+    - name: grep
+      match: hcp_terraform.audit
+      logical_op: or
+      regex:
+        - $resource['action'] discard
+        - $resource['action'] discarded
 
   # Add a few HCP Terraform Specific values
     - name: modify
@@ -33,6 +39,15 @@ pipeline:
     - name: file
       match: hcp_terraform.audit
       path: ./
+    - name: azure_blob
+      match: hcp_terraform.audit
+      account_name: ${AZURE_STORAGE_ACCOUNT_NAME}
+      shared_key: ${AZURE_STORAGE_ACCOUNT_KEY}
+      path: terraform
+      blob_type: blockblob
+      container_name: hcp
+      auto_create_container: on
+      tls: on
   # Push logs into GCP Logging
     - name: stackdriver
       match: hcp_terraform.audit
@@ -40,6 +55,6 @@ pipeline:
       # Generic Tasks (vs. global) require additional fields, may be unneeded
       # https://cloud.google.com/monitoring/api/resources#tag_generic_task
       location: app.terraform.io # The GCP or AWS region in which data about the resource is stored.
-      namespace: hcp_terraform.  # A namespace identifier, such as a cluster name.
+      namespace: hcp_terraform  # A namespace identifier, such as a cluster name.
       job: hcp_terraform         # An identifier for a grouping of related tasks, such as the name of a microservice or distributed batch job.
-      task_id: hcp_terraform.    # A unique identifier for the task within the namespace and job, such as a replica index identifying the task within the job.
+      task_id: hcp_terraform    # A unique identifier for the task within the namespace and job, such as a replica index identifying the task within the job.

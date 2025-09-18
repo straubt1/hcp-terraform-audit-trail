@@ -41,3 +41,5 @@ ai/
 fluent-bit/hcp_terraform.audit
 fluent-bit/exec.0
 *.terraform.lock.hcl
+elasticsearch-data/
+*.log
